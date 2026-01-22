@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: Arial, sans-serif;
+    }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+    }
+    .cell {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #ffffff, #e0e0e0);
+      font-size: 2em;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .cell:hover {
+      background: linear-gradient(135deg, #e0e0e0, #ffffff);
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 1.5em;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <div id="game"></div>
+    <div id="message"></div>
+    <button id="reset">Reset</button>
+  </div>
+  <script>
+    const game = document.getElementById('game');
+    const message = document.getElementById('message');
+    const resetButton = document.getElementById('reset');
+    let board = ['', '', '', '', '', '', '', '', ''];
+    let currentPlayer = 'X';
+    let isGameActive = true;
+    let isPlayerTurn = true;
+
+    const createCell = (index) => {
+      const cell = document.createElement('div');
+      cell.classList.add('cell');
+      cell.addEventListener('click', () => handleCellClick(index));
+      game.appendChild(cell);
+    };
+
+    const handleCellClick = (index) => {
+      if (!isPlayerTurn || board[index] !== '' || !isGameActive) return;
+      board[index] = 'X';
+      renderBoard();
+      checkWinner();
+      if (isGameActive) {
+        isPlayerTurn = false;
+        setTimeout(() => {
+          aiMove();
+        }, 500);
+      }
+    };
+
+    const renderBoard = () => {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach((cell, index) => {
+        cell.textContent = board[index];
+      });
+    };
+
+    const checkWinner = () => {
+      const winningCombinations = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+      ];
+      for (const combination of winningCombinations) {
+        const [a, b, c] = combination;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          if (board[a] === 'X') {
+            message.textContent = 'You win!';
+          } else {
+            message.textContent = 'AI wins!';
+          }
+          isGameActive = false;
+          return;
+        }
+      }
+      if (!board.includes('')) {
+        message.textContent = 'It\'s a draw!';
+        isGameActive = false;
+      }
+    };
+
+    const aiMove = () => {
+      // Check if AI can win
+      let move = findWinningMove('O');
+      if (move !== -1) {
+        board[move] = 'O';
+        renderBoard();
+        checkWinner();
+        if (isGameActive) {
+          isPlayerTurn = true;
+        }
+        return;
+      }
+
+      // Check if need to block player
+      move = findWinningMove('X');
+      if (move !== -1) {
+        board[move] = 'O';
+        renderBoard();
+        checkWinner();
+        if (isGameActive) {
+          isPlayerTurn = true;
+        }
+        return;
+      }
+
+      // Take center if available
+      if (board[4] === '') {
+        board[4] = 'O';
+        renderBoard();
+        checkWinner();
+        if (isGameActive) {
+          isPlayerTurn = true;
+        }
+        return;
+      }
+
+      // If player has corner, take opposite
+      const corners = [0, 2, 6, 8];
+      const opposites = {0: 8, 2: 6, 6: 2, 8: 0};
+      for (let corner of corners) {
+        if (board[corner] === 'X' && board[opposites[corner]] === '') {
+          board[opposites[corner]] = 'O';
+          renderBoard();
+          checkWinner();
+          if (isGameActive) {
+            isPlayerTurn = true;
+          }
+          return;
+        }
+      }
+
+      // Take any empty corner
+      for (let corner of corners) {
+        if (board[corner] === '') {
+          board[corner] = 'O';
+          renderBoard();
+          checkWinner();
+          if (isGameActive) {
+            isPlayerTurn = true;
+          }
+          return;
+        }
+      }
+
+      // Take any empty side
+      const sides = [1, 3, 5, 7];
+      for (let side of sides) {
+        if (board[side] === '') {
+          board[side] = 'O';
+          renderBoard();
+          checkWinner();
+          if (isGameActive) {
+            isPlayerTurn = true;
+          }
+          return;
+        }
+      }
+    };
+
+    const findWinningMove = (player) => {
+      const winningCombinations = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+      ];
+      for (const combination of winningCombinations) {
+        const [a, b, c] = combination;
+        if (board[a] === player && board[b] === player && board[c] === '') return c;
+        if (board[a] === player && board[c] === player && board[b] === '') return b;
+        if (board[b] === player && board[c] === player && board[a] === '') return a;
+      }
+      return -1;
+    };
+
+    const resetGame = () => {
+      board = ['', '', '', '', '', '', '', '', ''];
+      currentPlayer = 'X';
+      isGameActive = true;
+      isPlayerTurn = true;
+      message.textContent = '';
+      renderBoard();
+    };
+
+    resetButton.addEventListener('click', resetGame);
+    for (let i = 0; i < 9; i++) {
+      createCell(i);
+    }
+  </script>
+</body>
+</html>
